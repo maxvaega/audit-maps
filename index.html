@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Map</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            padding: 2rem;
+            background-color: #f8f9fa;
+            color: #343a40;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        #map {
+            height: 500px;
+            width: 100%;
+            margin-bottom: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 2px solid #e9ecef;
+        }
+
+        .controls {
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #4dabf7;
+            box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.2);
+        }
+
+        input[type="checkbox"] {
+            width: 1.2rem;
+            height: 1.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .primary-button {
+            background-color: #228be6;
+            color: white;
+        }
+
+        .primary-button:hover {
+            background-color: #1c7ed6;
+        }
+
+        .secondary-button {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+
+        .secondary-button:hover {
+            background-color: #dee2e6;
+        }
+
+        .danger-button {
+            background-color: #fa5252;
+            color: white;
+        }
+
+        .danger-button:hover {
+            background-color: #e03131;
+        }
+
+        .row-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .drag-handle {
+            cursor: move;
+            padding: 0.5rem;
+            color: #adb5bd;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .drag-handle:hover {
+            color: #495057;
+        }
+
+        tr.dragging {
+            opacity: 0.5;
+            background-color: #f1f3f5;
+        }
+
+        .travel-time {
+            color: #868e96;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .notification {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .notification.success {
+            background-color: #40c057;
+        }
+
+        .notification.error {
+            background-color: #fa5252;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            #map {
+                height: 300px;
+            }
+
+            th, td {
+                padding: 0.75rem;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Audit map</h1>
+    <div id="map"></div>
+    <div class="controls">
+        <button onclick="addRow()" class="primary-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z"/>
+            </svg>
+            Add Address
+        </button>
+        <button onclick="calculateRoute()" class="primary-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M9.5 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5a.5.5 0 0 1 .5-.5z"/>
+            </svg>
+            Calculate Route
+        </button>
+        <button onclick="generateShareableLink()" class="secondary-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1.002 1.002 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4.018 4.018 0 0 1-.128-1.287z"/>
+                <path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243L6.586 4.672z"/>
+            </svg>
+            Generate Shareable Link
+        </button>
+    </div>
+    <table id="addressTable">
+        <thead>
+            <tr>
+                <th width="40"></th>
+                <th width="60">Select</th>
+                <th width="60">Order</th>
+                <th>Name</th>
+                <th>Address</th>
+                <th width="150">Travel Time</th>
+                <th width="100">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="addressTableBody"></tbody>
+    </table>
+    <div id="notification" class="notification"></div>
+
+    <!-- Il resto del JavaScript rimane invariato -->
+    <script>
+        // Inserisci qui il JavaScript fornito precedentemente
+    </script>
+</body>
+</html>
+
+    <script>
+        let map;
+let markers = [];
+let directionsService;
+let directionsRenderer;
+const addressCache = new Map();
+
+// Convert number to letter sequence (1=A, 2=B, etc.)
+function numberToLetter(num) {
+    let letter = '';
+    while (num > 0) {
+        num--;
+        letter = String.fromCharCode(65 + (num % 26)) + letter;
+        num = Math.floor(num / 26);
+    }
+    return letter;
+}
+
+// Initialize the map
+function initMap() {
+    const italyCenter = { lat: 41.9028, lng: 12.4964 };
+    
+    // Initialize Google Maps services
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer({
+        suppressMarkers: true
+    });
+    
+    // Create the map
+    map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 6,
+        center: italyCenter
+    });
+    
+    // Set the map for the DirectionsRenderer
+    directionsRenderer.setMap(map);
+
+    // Load addresses from URL if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const addresses = urlParams.get('addresses');
+    if (addresses) {
+        const addressList = JSON.parse(decodeURIComponent(addresses));
+        addressList.forEach(addr => addRow(addr.name, addr.address));
+    } else {
+        addRow(); // Add one empty row by default
+    }
+
+    initDragAndDrop();
+}
+
+function handlePaste(e) {
+    e.preventDefault();
+    
+    // Get pasted data
+    let pastedData = (e.clipboardData || window.clipboardData).getData('text');
+    
+    // Split into rows
+    const rows = pastedData.split(/\r\n|\n|\r/).filter(row => row.trim());
+    
+    // Get current cell position
+    const currentCell = e.target;
+    const currentRow = currentCell.closest('tr');
+    const currentTable = currentRow.closest('tbody');
+    const cellIndex = Array.from(currentRow.cells).findIndex(cell => cell.contains(currentCell));
+    let rowIndex = Array.from(currentTable.rows).indexOf(currentRow);
+    
+    // Paste data
+    rows.forEach((rowData) => {
+        const cells = rowData.split('\t');
+        cells.forEach((cellData, i) => {
+            const targetRow = currentTable.rows[rowIndex];
+            if (!targetRow) {
+                addRow(); // Add new row if needed
+            }
+            
+            const targetCell = currentTable.rows[rowIndex].cells[cellIndex + i];
+            if (targetCell) {
+                const input = targetCell.querySelector('input[type="text"]');
+                if (input) {
+                    input.value = cellData.trim();
+                    // Trigger address geocoding if it's an address field
+                    if (input.placeholder === "Enter address") {
+                        geocodeAddress(input);
+                    }
+                }
+            }
+        });
+        rowIndex++;
+    });
+}
+
+function handleKeyDown(e) {
+    if (e.key === 'Tab') {
+        e.preventDefault();
+        
+        const currentCell = e.target.closest('td');
+        const currentRow = currentCell.closest('tr');
+        const tbody = currentRow.closest('tbody');
+        
+        let nextCell = currentCell.nextElementSibling;
+        let nextRow = currentRow;
+        
+        // If we're at the end of the row
+        if (!nextCell || !nextCell.querySelector('input[type="text"]')) {
+            nextRow = currentRow.nextElementSibling;
+            if (!nextRow) {
+                addRow();
+                nextRow = tbody.lastElementChild;
+            }
+            nextCell = Array.from(nextRow.cells).find(cell => cell.querySelector('input[type="text"]'));
+        }
+        
+        const nextInput = nextCell.querySelector('input[type="text"]');
+        if (nextInput) {
+            nextInput.focus();
+        }
+    }
+}
+
+// Initialize drag and drop functionality
+function initDragAndDrop() {
+    const tbody = document.getElementById('addressTableBody');
+    let draggedRow = null;
+
+    tbody.addEventListener('dragstart', (e) => {
+        draggedRow = e.target.closest('tr');
+        draggedRow.classList.add('dragging');
+    });
+
+    tbody.addEventListener('dragend', (e) => {
+        draggedRow.classList.remove('dragging');
+        draggedRow = null;
+        updateSequenceAndRoute();
+    });
+
+    tbody.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const row = e.target.closest('tr');
+        if (row && row !== draggedRow) {
+            const rect = row.getBoundingClientRect();
+            const mid = (rect.top + rect.bottom) / 2;
+            if (e.clientY < mid) {
+                row.parentNode.insertBefore(draggedRow, row);
+            } else {
+                row.parentNode.insertBefore(draggedRow, row.nextSibling);
+            }
+        }
+    });
+}
+
+// Add a new row to the table
+function addRow(name = '', address = '') {
+    const tbody = document.getElementById('addressTableBody');
+    const row = tbody.insertRow();
+    row.draggable = true;
+    
+    row.innerHTML = `
+        <td class="drag-handle">☰</td>
+        <td><input type="checkbox" onchange="updateSequenceAndRoute()"></td>
+        <td></td>
+        <td><input type="text" value="${name}" placeholder="Enter name"></td>
+        <td><input type="text" value="${address}" placeholder="Enter address" onchange="geocodeAddress(this)"></td>
+        <td class="travel-time"></td>
+        <td class="row-actions">
+            <button class="remove" onclick="removeRow(this)">Remove</button>
+        </td>
+    `;
+
+    // Add event listeners to text inputs
+    row.querySelectorAll('input[type="text"]').forEach(input => {
+        input.addEventListener('paste', handlePaste);
+        input.addEventListener('keydown', handleKeyDown);
+    });
+
+    if (address) {
+        geocodeAddress(row.querySelector('input[placeholder="Enter address"]'));
+    }
+}
+
+// Remove a row from the table
+function removeRow(button) {
+    const row = button.parentNode.parentNode;
+    const tbody = row.parentNode;
+    const rowIndex = Array.from(tbody.rows).indexOf(row);
+    
+    if (markers[rowIndex]) {
+        markers[rowIndex].setMap(null);
+        markers.splice(rowIndex, 1);
+    }
+    
+    tbody.deleteRow(rowIndex);
+    updateSequenceAndRoute();
+}
+
+function updateSequenceAndRoute() {
+    updateSequence();
+    calculateRoute();
+}
+
+function updateSequence() {
+    const tbody = document.getElementById('addressTableBody');
+    let sequenceCounter = 1;
+    
+    Array.from(tbody.rows).forEach((row) => {
+        const checkbox = row.querySelector('input[type="checkbox"]');
+        const sequenceCell = row.cells[2];
+        
+        if (checkbox.checked) {
+            sequenceCell.textContent = numberToLetter(sequenceCounter);
+            sequenceCounter++;
+        } else {
+            sequenceCell.textContent = '';
+        }
+    });
+}
+
+// Geocode address and add marker
+function geocodeAddress(input) {
+    const address = input.value;
+    if (!address) return;
+
+    if (addressCache.has(address)) {
+        const cachedResult = addressCache.get(address);
+        addMarker(cachedResult, Array.from(input.parentNode.parentNode.parentNode.rows).indexOf(input.parentNode.parentNode));
+        return;
+    }
+
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: address }, (results, status) => {
+        if (status === 'OK') {
+            const location = results[0].geometry.location;
+            addressCache.set(address, location);
+            addMarker(location, Array.from(input.parentNode.parentNode.parentNode.rows).indexOf(input.parentNode.parentNode));
+        } else {
+            showNotification('Could not find address. Please try again.', 'error');
+        }
+    });
+}
+
+// Add marker to map
+function addMarker(location, index) {
+    if (markers[index]) {
+        markers[index].setMap(null);
+    }
+
+    const marker = new google.maps.Marker({
+        position: location,
+        map: map
+    });
+
+    markers[index] = marker;
+    map.setCenter(location);
+}
+
+// Calculate and display route
+function calculateRoute() {
+    const selectedRows = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+        .map(checkbox => checkbox.parentNode.parentNode);
+
+    // Clear all travel times
+    document.querySelectorAll('.travel-time').forEach(cell => cell.textContent = '');
+
+    if (selectedRows.length < 2) {
+        directionsRenderer.setDirections({routes: []});
+        return;
+    }
+
+    const waypoints = selectedRows.map(row => {
+        const address = row.querySelector('input[placeholder="Enter address"]').value;
+        return { location: address, stopover: true };
+    });
+
+    const origin = waypoints.shift().location;
+    const destination = waypoints.pop().location;
+
+    directionsService.route({
+        origin: origin,
+        destination: destination,
+        waypoints: waypoints,
+        optimizeWaypoints: true,
+        travelMode: 'DRIVING'
+    }, (response, status) => {
+        if (status === 'OK') {
+            directionsRenderer.setDirections(response);
+            showNotification('Route calculated successfully!', 'success');
+            
+            // Display travel times
+            const legs = response.routes[0].legs;
+            const selectedRows = document.querySelectorAll('input[type="checkbox"]:checked');
+            
+            legs.forEach((leg, index) => {
+                if (index < selectedRows.length - 1) {
+                    const row = selectedRows[index].closest('tr');
+                    const travelTimeCell = row.querySelector('.travel-time');
+                    travelTimeCell.textContent = `To next: ${leg.duration.text}`;
+                }
+            });
+        } else {
+            showNotification('Could not calculate route. Please try again.', 'error');
+        }
+    });
+}
+
+// Generate shareable link
+function generateShareableLink() {
+    const addresses = Array.from(document.getElementById('addressTableBody').rows)
+        .map(row => ({
+            name: row.querySelector('input[placeholder="Enter name"]').value,
+            address: row.querySelector('input[placeholder="Enter address"]').value
+        }))
+        .filter(addr => addr.address);
+
+    const params = new URLSearchParams();
+    params.set('addresses', encodeURIComponent(JSON.stringify(addresses)));
+    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    
+    navigator.clipboard.writeText(url)
+        .then(() => showNotification('Shareable link copied to clipboard!', 'success'))
+        .catch(() => showNotification('Failed to copy link.', 'error'));
+}
+
+// Show notification
+function showNotification(message, type) {
+    const notification = document.getElementById('notification');
+    notification.textContent = message;
+    notification.className = `notification ${type}`;
+    notification.style.display = 'block';
+
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, 3000);
+}
+
+// Load Google Maps API and initialize the map
+document.addEventListener('DOMContentLoaded', function() {
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyCQM_WOg1DrkONprFpkrW-Gk_Xofq604pk&callback=initMap`;
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+});
+    </script>
+</body>
+</html>
