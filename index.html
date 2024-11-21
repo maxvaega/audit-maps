@@ -273,6 +273,20 @@
             border-radius: 4px;
         }
 
+        .travel-time {
+    text-align: center;
+    min-width: 80px;
+}
+
+#total-time {
+    text-align: center;
+    background-color: #f8f9fa;
+}
+
+tfoot td {
+    border-top: 2px solid #dee2e6;
+}
+
     </style>
 </head>
 <body>
@@ -314,6 +328,13 @@
             </tr>
         </thead>
         <tbody id="addressTableBody"></tbody>
+        <tfoot>
+            <tr><td></td><td></td>
+                <td colspan="3" style="text-align: right; font-weight: bold;">Total Travel Time:</td>
+                <td id="total-time" style="font-weight: bold;"></td>
+            </tr>
+        </tfoot>
+
     </table>
     <div id="notification" class="notification"></div>
 
@@ -510,8 +531,8 @@ function addRow(name = '', address = '') {
         <td class="drag-handle">☰</td>
         <td><input type="checkbox" onchange="updateSequenceAndRoute()"></td>
         <td></td>
-        <td><input type="text" value="${name}" placeholder="Enter name" onblur="handleInputBlur(this)"></td>
-        <td><input type="text" value="${address}" placeholder="Enter address" onblur="handleInputBlur(this)"></td>
+        <td><input type="text" value="${name}" placeholder="Enter name" onblur="handleInputBlur(this)" class="name-input"></td>
+        <td><input type="text" value="${address}" placeholder="Enter address" onblur="handleInputBlur(this)" class="address-input"></td>
         <td class="travel-time"></td>
         <td class="row-actions">
             <button class="remove" onclick="removeRow(this)">Remove</button>
@@ -527,6 +548,16 @@ function addRow(name = '', address = '') {
     if (address) {
         geocodeAddress(row.querySelector('input[placeholder="Enter address"]'));
     }
+
+        // Add event listeners for the new row
+        const addressInput = newRow.querySelector('.address-input');
+    const nameInput = newRow.querySelector('.name-input');
+    
+    addressInput.addEventListener('blur', function() {
+        if (this.value.trim() !== '') {
+            geocodeAddress(this.value, nameInput.value, newRow);
+        }
+    });
 }
 
 // Nuova funzione per gestire l'uscita dal campo input
@@ -839,7 +870,74 @@ function resetAll() {
             const tbody = document.querySelector('#addressTable tbody');
             tbody.innerHTML = '';
             addRow();
+
+                // Clear travel times
+    document.querySelectorAll('.travel-time').forEach(cell => {
+        cell.textContent = '';
+    });
+    
+    // Reset total
+    document.getElementById('total-time').textContent = '';
         }
+
+        // Aggiungi queste funzioni di utilità
+function timeToMinutes(timeStr) {
+    if (!timeStr) return 0;
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+}
+
+function minutesToTime(totalMinutes) {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+}
+
+function updateTotalTime() {
+    const travelTimes = document.querySelectorAll('.travel-time');
+    let totalMinutes = 0;
+
+    travelTimes.forEach(cell => {
+        if (cell.textContent) {
+            totalMinutes += timeToMinutes(cell.textContent);
+        }
+    });
+
+    const totalCell = document.getElementById('total-time');
+    totalCell.textContent = totalMinutes > 0 ? minutesToTime(totalMinutes) : '';
+}
+
+
+function displayDuration(result) {
+    const legs = result.routes[0].legs;
+    
+    // Reset all travel times
+    document.querySelectorAll('.travel-time').forEach(cell => {
+        cell.textContent = '';
+    });
+
+    // Get selected rows
+    const selectedRows = Array.from(document.querySelectorAll('#addressTable tbody tr'))
+        .filter(row => row.querySelector('input[type="checkbox"]').checked);
+
+    // Update travel time for each leg
+    legs.forEach((leg, index) => {
+        const minutes = Math.round(leg.duration.value / 60);
+        const hours = Math.floor(minutes / 60);
+        const remainingMinutes = minutes % 60;
+        const timeStr = `${hours.toString().padStart(2, '0')}:${remainingMinutes.toString().padStart(2, '0')}`;
+        
+        if (selectedRows[index]) {
+            const timeCell = selectedRows[index].querySelector('.travel-time');
+            if (timeCell) {
+                timeCell.textContent = timeStr;
+            }
+        }
+    });
+
+    // Update total time
+    updateTotalTime();
+}
 
         
     </script>
