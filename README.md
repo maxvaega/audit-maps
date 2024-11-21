@@ -2,6 +2,8 @@
 
 A web-based application for planning and visualizing audit routes with interactive Google Maps integration.
 
+<img src="https://i.ibb.co/3kw28HB/audit-map.png" alt="Audit Maps"/>
+
 ## 📋 Features
 
 - **Interactive Map**: Visualize locations with custom markers (A, B, C...)
@@ -91,4 +93,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 👨‍💻 Author
 
-Made with ❤️ by Massimo Olivieri 🪂
+Made with ❤️ by [Massimo Olivieri](https://linktr.ee/maxvaega) 🪂
